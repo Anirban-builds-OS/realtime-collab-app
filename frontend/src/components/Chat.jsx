@@ -1,20 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
-import { getSocket } from "../socket.js";
 
 export default function Chat({ socket, roomId }) {
-  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const listRef = useRef(null);
 
   useEffect(() => {
-    const sock = socket.current || getSocket();
-    socket.current = sock;
+    const sock = socket.current;
+    if (!sock) return;
 
     function handleMessage(msg) {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => {
+        const alreadyExists = prev.some((existing) => existing.id && existing.id === msg.id);
+        if (alreadyExists) return prev;
+        return [...prev, msg];
+      });
     }
 
     sock.on("chat-message", handleMessage);
@@ -30,18 +31,9 @@ export default function Chat({ socket, roomId }) {
     const trimmed = text.trim();
     if (!trimmed) return;
 
-    const sock = socket.current || getSocket();
-    socket.current = sock;
+    const sock = socket.current;
+    if (!sock) return;
 
-    if (!sock.connected) sock.connect();
-
-    const optimisticMessage = {
-      from: user?.name || "You",
-      message: trimmed,
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, optimisticMessage]);
     sock.emit("chat-message", { room: roomId, message: trimmed });
     setText("");
   }
@@ -51,7 +43,7 @@ export default function Chat({ socket, roomId }) {
       <div className="chat-messages" ref={listRef}>
         {messages.length === 0 && <p className="chat-empty">No messages yet — say hello.</p>}
         {messages.map((m, i) => (
-          <div key={i} className="chat-message">
+          <div key={m.id || `${m.from}-${m.timestamp}-${i}`} className="chat-message">
             <span className="chat-author">{m.from}</span>
             <span className="chat-time">
               {new Date(m.timestamp).toLocaleTimeString([], {

@@ -101,7 +101,9 @@ function attachSignaling(io) {
 
     socket.on("chat-message", ({ room, message }) => {
       if (!room || !message) return;
+      const messageId = `${Date.now()}-${socket.id}-${Math.random().toString(36).slice(2, 9)}`;
       io.to(room).emit("chat-message", {
+        id: messageId,
         from: socket.user.name,
         message,
         timestamp: Date.now(),
