@@ -10,6 +10,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
 const attachSignaling = require("./socket/signaling");
+const { seedDemoUsers } = require("./utils/demoUsers");
 
 const app = express();
 const server = http.createServer(app);
@@ -28,6 +29,7 @@ app.use(express.json({ limit: "1mb" }));
 
 // --- Database ------------------------------------------------------------
 connectDB();
+seedDemoUsers();
 
 // --- REST routes -----------------------------------------------------------
 app.use("/api/auth", authRoutes);

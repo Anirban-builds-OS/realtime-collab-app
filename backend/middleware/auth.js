@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../models/User");
+const { getDemoUserById } = require("../utils/demoUsers");
 
 /**
  * Protects Express routes. Expects "Authorization: Bearer <token>".
@@ -14,8 +16,15 @@ async function protect(req, res, next) {
 
     const token = header.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const dbReady = mongoose.connection.readyState === 1;
 
-    const user = await User.findById(decoded.id);
+    let user = null;
+    if (dbReady) {
+      user = await User.findById(decoded.id);
+    } else {
+      user = getDemoUserById(decoded.id);
+    }
+
     if (!user) {
       return res.status(401).json({ message: "Not authorized, user not found" });
     }

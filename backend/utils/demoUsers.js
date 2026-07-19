@@ -1,7 +1,26 @@
+const bcrypt = require("bcryptjs");
+
 const demoUsers = new Map();
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
+}
+
+function seedDemoUsers() {
+  const seedUser = {
+    _id: "demo_user",
+    name: "Demo User",
+    email: "test@example.com",
+    password: bcrypt.hashSync("password123", 12),
+  };
+
+  const normalizedUser = {
+    ...seedUser,
+    email: normalizeEmail(seedUser.email),
+  };
+
+  demoUsers.set(normalizedUser._id, normalizedUser);
+  return normalizedUser;
 }
 
 function addDemoUser(user) {
@@ -25,4 +44,6 @@ function getDemoUserByEmail(email) {
   return null;
 }
 
-module.exports = { addDemoUser, getDemoUserById, getDemoUserByEmail };
+seedDemoUsers();
+
+module.exports = { addDemoUser, getDemoUserById, getDemoUserByEmail, seedDemoUsers };
